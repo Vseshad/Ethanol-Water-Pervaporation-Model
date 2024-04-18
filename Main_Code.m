@@ -1,0 +1,100 @@
+%% Calculation for Selectivity in Ethanol(1)-Water(2) System
+clearvars
+close all
+clc
+%% Flux Calculation
+% J is Flux (kg/m2*hr)
+% M1 is feed weight (kg)
+% M2 is perrmeate weight (kg)
+% a is membrane area (m2)
+% t is running timme (h)
+
+% Matlab Flux Calculation (Use when you know M1, M2, a & t)
+% M1=input('Enter value for feed Mass M1(kg)=');
+% M2=input('Enter value for Permeate Mass M2(kg)=');
+% a=input('Enter value for a(m2)=');
+% t=input('Enter value for t(hr)=');
+% [J]=Fluxcalc(M2,a,t);
+
+% Flux Manual Entry
+J=input('Enter value for Mass Flux J(kg/(m2*hr)=');
+
+%% Mass fraction to Mole fraction Calculation
+% xi_mass is Component i mass fraction(kg/kg) in Feed
+% xj_mass is Component j mass fraction(kg/kg) in Feed
+% yi_mass is Component i mass fraction(kg/kg) in Permeate 
+% yj_mass is Component j mass fraction(kg/kg) in Permeate
+% xi_mole is Component i mole fraction(Kmol/Kmol) in the feed
+% xj_mole is Component j mole fraction(Kmol/Kmol) in the feed
+
+xi_mass=input('Enter value for mass fraction of i in feed xi=');
+yi_mass=input('Enter value for mass fraction of i in permeate yi=');
+xj_mass=1-xi_mass;
+yj_mass=1-yi_mass;
+
+% Excel Mole fraction Calculation with M1 & M2 (Use when you know M1 & M2)
+% [xi_mole,yi_mole]=masstomole(xi_mass,yi_mass,M1,M2);
+
+% Mole fraction calculation by Manuual entry
+xi_mole=input('Enter value for mole fraction of i in feed xi=');
+yi_mole=input('Enter value for mole fraction of i in permeate yi=');
+
+xj_mole=1-xi_mole;
+yj_mole=1-yi_mole;
+
+%% Component Molar Flux
+% J is Flux (g/cm2*s)
+% ji is Molar Flux of Ethanol (cm3*STP/(cm2*s)
+% jj is Molar Flux of Water (cm3*STP/(cm2*s)
+
+[ji,jj]=CMF(J,yi_mass,yj_mass);
+
+%% Seperation Factor Calculation (Molar Fraction based)
+% Bij is the Seperation Factor of Commponent i from j
+% yi_mole is Component i mole fraction(Kmol/Kmol) in the Permeate
+% yj_mole is Component j mole fraction(Kmol/Kmol) in the Permeate
+
+[Bij]=Sepfac(xi_mole,yi_mole);
+
+%% Atiivity Coeffcient Calculation 
+% T is the Temperature in Celcius
+T=input('Temperature in Celcius=');
+% gama1 is Activity coeffcient of component 1
+% gama2 is Activity coeffcient of component 2
+% Atiivity Coeffcient Calculation by Matlab function 'UNIFAC'
+
+% Atiivity Coeffcient Calculation by UNIFAC (Matlab Function)
+x=[xi_mole,xj_mole]';
+[gama]=UNIFAC(x,T);
+gamai=gama(1);
+gamaj=gama(2);
+
+% Atiivity Coeffcient Calculation by 'UNIFAC_VLE'
+%[gamai,gamaj]=Excelui(T,xi_mole,xj_mole);
+
+% Atiivity Coeffcient Calculation by Manual Entry (Uncoment gamai & gamaj)
+% gamai=6.255;
+% gamaj=1.002;
+
+%% Saturation Pressure Calculation
+% Psat is Saturation pressure of component i at T using (Antonie equation)
+
+[Pisat,Pjsat]=Psatcalc(T);
+
+%% Vapour Pressure Calculation
+% DPvap is cross-membrane water vapor pressure differential for i and j 
+% NOTE: PERMEATE VAPOUR PRESSURE IS ASSUMED TO BE=0cmHg
+
+[DPvapi,DPvapj]=DPvapcalc(xi_mole,xj_mole,gamai,gamaj,Pisat,Pjsat);
+
+%% Permeance Calculation
+% Fi is permeance of component i
+% Fj is permeance of component j
+
+[Fi,Fj]=Permcalc(ji,jj,DPvapi,DPvapj);
+
+%% Selectivity Calculation
+% Alphaij is the selectivity of component i wrt j
+
+Alphaij=(Fi/Fj);
+fprintf('Selectivity Ethanol-Water=%.3f \n',Alphaij);
